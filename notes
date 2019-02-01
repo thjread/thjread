@@ -1,0 +1,5 @@
+GCP configuration
+=================
+
+Give VM an external IP.
+Set up firewall to only allow https from cloudflare IP addresses, don't allow http from anyone.
