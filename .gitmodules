@@ -1,0 +1,3 @@
+[submodule "Reminders"]
+	path = Reminders
+	url = https://bitbucket.org/thjread/Reminders
