@@ -1,0 +1,6 @@
+version: '3'
+services:
+  rust:
+    image: reminders-rust
+  nginx:
+    image: nginx-dev

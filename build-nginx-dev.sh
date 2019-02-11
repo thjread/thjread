@@ -1,6 +1,7 @@
 #!/bin/sh
 cd Reminders/Frontend/reminders
-npm run build
+npm install
+npm run stage
 find dist -type f -exec zopfli '{}' \;
 cd ../../..
-docker build -t reminders-nginx .
+docker build -f DevDockerfile -t nginx-dev .

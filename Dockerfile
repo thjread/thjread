@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx:1.15-alpine
 COPY static /usr/share/nginx/html/main
 COPY Reminders/Frontend/reminders/dist /usr/share/nginx/html/reminders
 COPY nginx.conf /etc/nginx/nginx.conf
