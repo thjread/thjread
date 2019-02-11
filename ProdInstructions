@@ -1,0 +1,8 @@
+Container Optimised OS with docker/compose image
+echo alias docker-compose="'"'docker run --rm -v /home/thjread/.docker:/root/.docker -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/rootfs/$PWD" -w="/rootfs/$PWD" docker/compose:1.23.1'"'" >> ~/.bashrc
+(note maybe copying GCR credentials from host to container)
+
+https://stackoverflow.com/questions/2466735/how-to-sparsely-checkout-only-one-single-file-from-a-git-repository to get docker-compose.yml
+
+Run docker-credential-gcr gcr-login, docker-credential-gcr configure-docker
+Pull docker images first so docker-compose doesn't have to
