@@ -6,3 +6,6 @@ https://stackoverflow.com/questions/2466735/how-to-sparsely-checkout-only-one-si
 
 Run docker-credential-gcr gcr-login, docker-credential-gcr configure-docker
 Pull docker images first so docker-compose doesn't have to
+
+sudo netstat -tulpn | grep 443 to see what's using a port
+sudo systemctl restart docker if docker-proxy is using port
