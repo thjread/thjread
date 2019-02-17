@@ -7,3 +7,6 @@ COPY security-headers.conf /etc/nginx/security-headers.conf
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY server.conf /etc/nginx/conf.d/server.conf
 COPY certs /etc/nginx/certs
+COPY server_name.conf /etc/nginx/server_name.conf
+COPY server_name_main.conf /etc/nginx/server_name_main.conf
+COPY server_name_reminders.conf /etc/nginx/server_name_reminders.conf
