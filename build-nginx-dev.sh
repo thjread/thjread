@@ -2,6 +2,6 @@
 cd Reminders/Frontend/reminders
 npm install
 npm run stage
-find dist -type f -exec zopfli '{}' \;
+find dist -type f ! -name '*.png' ! -name '*.ico' -exec zopfli '{}' \;
 cd ../../..
 docker build -f DevDockerfile -t nginx-dev .
