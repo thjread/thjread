@@ -4,4 +4,4 @@ npm install
 npm run stage
 find dist -type f ! -name '*.png' ! -name '*.ico' -exec zopfli '{}' \;
 cd ../../..
-docker build -f DevDockerfile -t nginx-dev .
+docker build -f RemindersDevDockerfile -t nginx-dev .

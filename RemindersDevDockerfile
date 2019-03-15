@@ -1,0 +1,13 @@
+FROM nginx:1.15-alpine
+COPY home/static /usr/share/nginx/html/main
+COPY Reminders/Frontend/reminders/dist /usr/share/nginx/html/reminders
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY dev-ssl.conf /etc/nginx/ssl.conf
+COPY security-headers.conf /etc/nginx/security-headers.conf
+COPY api-security-headers.conf /etc/nginx/api-security-headers.conf
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY server.conf /etc/nginx/conf.d/server.conf
+COPY dev-certs /etc/nginx/certs
+COPY reminders-dev-server_name.conf /etc/nginx/server_name.conf
+COPY reminders-dev-server_name_main.conf /etc/nginx/server_name_main.conf
+COPY reminders-dev-server_name_reminders.conf /etc/nginx/server_name_reminders.conf
