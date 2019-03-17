@@ -1,4 +1,7 @@
 #!/bin/sh
+cd TileRender
+sh build-all.sh
+cd ..
 cd Reminders/Frontend/reminders
 npm install
 npm run build

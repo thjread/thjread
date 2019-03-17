@@ -1,5 +1,5 @@
 FROM nginx:1.15-alpine
-COPY home/static /usr/share/nginx/html/main
+COPY TileRender/www/dist /usr/share/nginx/html/main
 COPY Reminders/Frontend/reminders/dist /usr/share/nginx/html/reminders
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY ssl.conf /etc/nginx/ssl.conf
