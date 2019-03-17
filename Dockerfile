@@ -5,6 +5,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY ssl.conf /etc/nginx/ssl.conf
 COPY security-headers.conf /etc/nginx/security-headers.conf
 COPY api-security-headers.conf /etc/nginx/api-security-headers.conf
+COPY wasm-security-headers.conf /etc/nginx/wasm-security-headers.conf
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY server.conf /etc/nginx/conf.d/server.conf
 COPY certs /etc/nginx/certs
