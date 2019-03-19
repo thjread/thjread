@@ -1,0 +1,7 @@
+version: '3'
+services:
+  backup:
+    image: gcr.io/crypto-isotope-229419/reminders-backup
+    restart: always
+    depends_on:
+      - db

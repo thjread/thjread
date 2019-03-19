@@ -3,6 +3,7 @@ echo alias docker-compose="'"'docker run --rm -v /home/thjread/.docker:/root/.do
 (note maybe copying GCR credentials from host to container)
 
 https://stackoverflow.com/questions/2466735/how-to-sparsely-checkout-only-one-single-file-from-a-git-repository to get docker-compose.yml
+Download docker-compose.prod.yml to docker-compose.override.yml
 
 Run docker-credential-gcr gcr-login, docker-credential-gcr configure-docker
 Pull docker images first so docker-compose doesn't have to

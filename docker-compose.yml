@@ -9,6 +9,8 @@ services:
   rust:
     image: gcr.io/crypto-isotope-229419/reminders-rust
     restart: always
+    depends_on:
+     - db
 
   nginx:
     image: gcr.io/crypto-isotope-229419/reminders-nginx

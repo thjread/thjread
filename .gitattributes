@@ -1,3 +1,4 @@
 certs/* filter=git-crypt diff=git-crypt
 dev-certs/* filter=git-crypt diff=git-crypt
 *.pem filter=git-crypt diff=git-crypt
+secrets/* filter=git-crypt diff=git-crypt
