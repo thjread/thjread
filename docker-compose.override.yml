@@ -4,3 +4,6 @@ services:
     image: reminders-rust
   nginx:
     image: nginx-dev
+  backup:
+    image: busybox
+    restart: "no"

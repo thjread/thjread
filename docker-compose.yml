@@ -19,6 +19,12 @@ services:
      - "443:443"
     restart: always
 
+  backup:
+    image: gcr.io/crypto-isotope-229419/reminders-backup
+    restart: always
+    depends_on:
+      - db
+
 volumes:
   db-data:
     driver: local
