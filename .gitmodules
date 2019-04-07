@@ -1,6 +1,6 @@
 [submodule "Reminders"]
 	path = Reminders
-	url = https://bitbucket.org/thjread/Reminders
+	url = https://github.com/thjread/Reminders
 [submodule "TileRender"]
 	path = TileRender
-	url = https://bitbucket.org/thjread/TileRender
+	url = https://github.com/thjread/TileRender
