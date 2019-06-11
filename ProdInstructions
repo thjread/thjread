@@ -9,3 +9,10 @@ Pull docker images first so docker-compose doesn't have to
 
 sudo netstat -tulpn | grep 443 to see what's using a port
 sudo systemctl restart docker if docker-proxy is using port
+
+=====================
+
+Debian image
+Install docker-ce, docker-compose
+sudo gcloud auth configure-docker
+sudo docker-compose up -d
