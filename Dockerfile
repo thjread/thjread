@@ -1,4 +1,4 @@
-FROM nginx:1.15-alpine
+FROM nginx:1.17-alpine
 COPY TileRender/www/dist /usr/share/nginx/html/main
 COPY Reminders/Frontend/reminders/dist /usr/share/nginx/html/reminders
 COPY nginx.conf /etc/nginx/nginx.conf
