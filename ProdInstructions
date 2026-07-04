@@ -1,18 +1,46 @@
-Container Optimised OS with docker/compose image
-echo alias docker-compose="'"'docker run --rm -v /home/thjread/.docker:/root/.docker -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/rootfs/$PWD" -w="/rootfs/$PWD" docker/compose:1.23.1'"'" >> ~/.bashrc
-(note maybe copying GCR credentials from host to container)
+# Production notes (updated July 2026)
 
-https://stackoverflow.com/questions/2466735/how-to-sparsely-checkout-only-one-single-file-from-a-git-repository to get docker-compose.yml
+VM: thjread-f1-micro-new (e2-micro, us-west1-b), Debian 10, docker-compose 1.24.
+docker-compose.yml lives in /home/thjread (compose project name "thjread").
+SSH: gcloud compute ssh thjread@thjread-f1-micro-new (key ~/.ssh/google_compute_engine).
 
-Run docker-credential-gcr gcr-login, docker-credential-gcr configure-docker
-Pull docker images first so docker-compose doesn't have to
+## Deploying new images
+
+Local: build images (build-nginx.sh, Reminders/Backend + Backup builds), then
+upload-*.sh scripts push to gcr.io/crypto-isotope-229419 (gcloud auth configure-docker gcr.io once).
+
+On the VM the old docker-credential-gcloud helper is broken; log in with the
+metadata-server token instead (service account has devstorage.read_only):
+
+    TOKEN=$(curl -s -H 'Metadata-Flavor: Google' \
+      'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' \
+      | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+    echo "$TOKEN" | sudo docker login -u oauth2accesstoken --password-stdin gcr.io
+
+Then: sudo docker-compose pull && sudo docker-compose up -d
+
+IMPORTANT: Cloudflare has a cache-everything rule - purge the cache in the
+Cloudflare dashboard after deploying frontend changes, or stale HTML keeps
+referencing deleted hashed assets.
+
+Cloudflare Authenticated Origin Pulls is on (ssl_verify_client in ssl.conf),
+so the origin only answers to Cloudflare; local testing needs that disabled.
+
+## Postgres
+
+postgres:17-alpine on volume thjread_db-data-pg17 (trust auth inside the
+compose network). Migrated from postgres 12 on 2026-07-04 by restoring
+s3://reminders-backup/pre-pg17-migration into a fresh volume. The old pg12
+volume thjread_db-data is kept as a rollback; delete it once confident:
+    sudo docker volume rm thjread_db-data
+
+Backups: hourly/daily/weekly pg_dump to s3://reminders-backup (versioned
+bucket; lifecycle keeps hourly versions 1 day, daily 14 days, weekly 365 days).
+Restore drill: aws s3 cp s3://reminders-backup/daily - | \
+    sudo docker exec -i thjread_db_1 psql -q -U postgres -d postgres
+(into a fresh volume; the dump includes schema.)
+
+## Old notes
 
 sudo netstat -tulpn | grep 443 to see what's using a port
 sudo systemctl restart docker if docker-proxy is using port
-
-=====================
-
-Debian image
-Install docker-ce, docker-compose
-sudo gcloud auth configure-docker
-sudo docker-compose up -d
