@@ -1,9 +1,15 @@
+# version key kept for the VM's docker-compose 1.24, which otherwise
+# parses the file as the legacy v1 format
 version: '3'
 services:
   db:
-    image: postgres:12-alpine
+    image: postgres:17-alpine
+    environment:
+      # no password within the private compose network, matching the
+      # DATABASE_URL the backend and backup containers use
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-     - db-data:/var/lib/postgresql/data
+     - db-data-pg17:/var/lib/postgresql/data
     restart: always
 
   rust:
@@ -26,6 +32,8 @@ services:
       - db
 
 volumes:
-  db-data:
+  # pg17 gets a fresh volume; data is restored from the S3 backup at
+  # migration time (see ProdInstructions). The old pg12 volume db-data
+  # is left untouched until the migration is confirmed good.
+  db-data-pg17:
     driver: local
-
