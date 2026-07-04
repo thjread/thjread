@@ -1,6 +1,3 @@
-# version key kept for the VM's docker-compose 1.24, which otherwise
-# parses the file as the legacy v1 format
-version: '3'
 services:
   db:
     image: postgres:17-alpine
@@ -19,10 +16,8 @@ services:
      - db
 
   nginx:
+    # no published ports: all ingress comes through the cloudflared tunnel
     image: gcr.io/crypto-isotope-229419/reminders-nginx
-    ports:
-     - "80:80"
-     - "443:443"
     restart: always
 
   backup:
@@ -30,6 +25,16 @@ services:
     restart: always
     depends_on:
       - db
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      # set in an untracked .env file next to this compose file on the VM
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    restart: always
+    depends_on:
+      - nginx
 
 volumes:
   # pg17 gets a fresh volume; data is restored from the S3 backup at

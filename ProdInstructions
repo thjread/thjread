@@ -1,8 +1,27 @@
 # Production notes (updated July 2026)
 
-VM: thjread-f1-micro-new (e2-micro, us-west1-b), Debian 10, docker-compose 1.24.
+VM: thjread-deb13 (e2-micro, us-west1-b), Debian 13, Docker CE + compose v2
+(use "sudo docker compose", not docker-compose).
 docker-compose.yml lives in /home/thjread (compose project name "thjread").
-SSH: gcloud compute ssh thjread@thjread-f1-micro-new (key ~/.ssh/google_compute_engine).
+SSH: gcloud compute ssh thjread@thjread-deb13 (key ~/.ssh/google_compute_engine).
+Static IP 35.233.213.173 is attached (free while on a free-tier e2-micro;
+starts charging if left reserved-unattached).
+
+## Ingress: Cloudflare Tunnel
+
+All traffic arrives via a Cloudflare Tunnel ("thjread-vm" in the Cloudflare
+account); nginx publishes NO host ports. cloudflared runs as a compose
+service; its token lives in /home/thjread/.env (TUNNEL_TOKEN=..., chmod 600,
+not in git). DNS: thjread.com / www / reminders are proxied CNAMEs to
+<tunnel-id>.cfargotunnel.com. Tunnel ingress maps all hostnames to
+http://nginx:8081 (plain-HTTP vhost; TLS terminates at the Cloudflare edge).
+The old 443 origin-pull setup (ssl.conf, certs/) is still in the nginx image
+but unused - can be removed eventually.
+
+The previous VM thjread-f1-micro-new (Debian 10) is STOPPED, kept as a
+rollback until ~mid-July 2026; delete it (and its disk) after that.
+Rollback = start it, re-add access config with the static IP, repoint DNS
+A records at it.
 
 ## Deploying new images
 
