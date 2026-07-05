@@ -38,12 +38,15 @@ metadata-server token instead (service account has devstorage.read_only):
 
 Then: sudo docker-compose pull && sudo docker-compose up -d
 
-IMPORTANT: Cloudflare has a cache-everything rule - purge the cache in the
-Cloudflare dashboard after deploying frontend changes, or stale HTML keeps
-referencing deleted hashed assets.
+IMPORTANT: Cloudflare has a cache-everything rule - purge the cache after
+deploying frontend changes, or stale HTML keeps referencing deleted hashed
+assets. Either in the dashboard, or via the API (token in
+~/.secrets/cf-api-token on the dev machine has Cache Purge permission):
 
-Cloudflare Authenticated Origin Pulls is on (ssl_verify_client in ssl.conf),
-so the origin only answers to Cloudflare; local testing needs that disabled.
+    curl -s -X POST \
+      "https://api.cloudflare.com/client/v4/zones/492aee868243cb67393d7b638ffac598/purge_cache" \
+      -H "Authorization: Bearer $(cat ~/.secrets/cf-api-token)" \
+      -H "Content-Type: application/json" --data '{"purge_everything":true}'
 
 ## Postgres
 
