@@ -25,11 +25,23 @@ A records at it.
 
 ## Deploying new images
 
-Local: build images (build-nginx.sh, Reminders/Backend + Backup builds), then
-upload-*.sh scripts push to gcr.io/crypto-isotope-229419 (gcloud auth configure-docker gcr.io once).
+One command from the repo root:
 
-On the VM the old docker-credential-gcloud helper is broken; log in with the
-metadata-server token instead (service account has devstorage.read_only):
+    ./deploy                    # nginx image (rebuilds Reminders frontend)
+    ./deploy rust               # backend image
+    ./deploy nginx rust backup  # any combination
+
+It builds and pushes the images to gcr.io/crypto-isotope-229419, pulls and
+restarts on the VM, purges the Cloudflare cache, and verifies the live
+bundle and API; it exits non-zero on any failure so it can run unattended.
+Needs docker group access, the gcloud SSH key in an ssh-agent, and
+~/.secrets/cf-api-token. TileRender wasm must be rebuilt separately
+(TileRender build scripts) if it changed - the nginx image bakes in
+TileRender/www/dist as-is.
+
+Manual fallback: on the VM the old docker-credential-gcloud helper is
+broken; log in with the metadata-server token instead (service account has
+devstorage.read_only):
 
     TOKEN=$(curl -s -H 'Metadata-Flavor: Google' \
       'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' \

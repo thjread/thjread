@@ -1,0 +1,97 @@
+#!/bin/sh
+# One-command deploy to the prod VM.
+#
+# Usage: ./deploy [nginx] [rust] [backup]      (default: nginx)
+#
+#   nginx  - rebuilds the Reminders frontend (vite), precompresses assets,
+#            builds and pushes the nginx image. TileRender www/dist is
+#            baked in as-is; run TileRender's build first if that changed.
+#   rust   - builds and pushes the backend image
+#   backup - builds and pushes the backup image
+#
+# Then pulls + restarts on the VM, purges the Cloudflare cache, and
+# verifies the live bundle and API. Exits non-zero on any failure, so it's
+# safe to run unattended.
+#
+# Needs: docker group access (sg docker -c ./deploy), the gcloud SSH key
+# loaded in an ssh-agent, and ~/.secrets/cf-api-token (Cache Purge perm).
+set -eu
+cd "$(dirname "$0")"
+
+REG=gcr.io/crypto-isotope-229419
+CF_ZONE=492aee868243cb67393d7b638ffac598
+FRONTEND=Reminders/Frontend/reminders
+
+targets="${*:-nginx}"
+
+for t in $targets; do
+  case "$t" in
+  nginx)
+    echo "== building Reminders frontend =="
+    (cd "$FRONTEND" && npx vite build)
+    echo "== precompressing assets =="
+    if command -v zopfli >/dev/null 2>&1; then
+      find "$FRONTEND/dist" -type f ! -name '*.png' ! -name '*.ico' \
+        ! -name '*.gz' ! -name '*.map' -exec zopfli '{}' \;
+    else
+      find "$FRONTEND/dist" -type f ! -name '*.png' ! -name '*.ico' \
+        ! -name '*.gz' ! -name '*.map' -exec gzip -9 -kf '{}' \;
+    fi
+    echo "== building + pushing nginx image =="
+    docker build -t "$REG/reminders-nginx" .
+    docker push "$REG/reminders-nginx"
+    ;;
+  rust)
+    echo "== building + pushing rust image =="
+    docker build -t "$REG/reminders-rust" Reminders/Backend
+    docker push "$REG/reminders-rust"
+    ;;
+  backup)
+    echo "== building + pushing backup image =="
+    docker build -t "$REG/reminders-backup" Reminders/Backup
+    docker push "$REG/reminders-backup"
+    ;;
+  *)
+    echo "unknown target: $t (expected nginx, rust and/or backup)" >&2
+    exit 1
+    ;;
+  esac
+done
+
+echo "== deploying on VM =="
+gcloud compute ssh thjread@thjread-deb13 --zone us-west1-b --command '
+  TOKEN=$(curl -s -H "Metadata-Flavor: Google" \
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
+    | python3 -c "import sys,json;print(json.load(sys.stdin)[\"access_token\"])") &&
+  echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin gcr.io >/dev/null &&
+  cd ~ && docker compose pull && docker compose up -d &&
+  docker compose ps --format "{{.Name}} {{.Status}}"'
+
+echo "== purging Cloudflare cache =="
+curl -sf -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+  -H "Authorization: Bearer $(cat "$HOME/.secrets/cf-api-token")" \
+  -H "Content-Type: application/json" --data '{"purge_everything":true}' \
+  | grep -q '"success": *true'
+echo "cache purged"
+
+echo "== verifying =="
+sleep 3
+case " $targets " in *" nginx "*)
+  local_js=$(grep -o 'assets/index-[^"]*\.js' "$FRONTEND/dist/index.html" | head -1)
+  live_js=$(curl -s "https://reminders.thjread.com/?deploycheck=$(date +%s)" \
+    | grep -o 'assets/index-[^"]*\.js' | head -1)
+  if [ "$local_js" != "$live_js" ]; then
+    echo "LIVE BUNDLE MISMATCH: live=$live_js local=$local_js" >&2
+    exit 1
+  fi
+  echo "live bundle matches local build: $live_js"
+  ;;
+esac
+api_code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+  https://reminders.thjread.com/api/update -H "Content-Type: application/json" -d '{}')
+if [ "$api_code" != 400 ]; then
+  echo "API health check returned $api_code (expected 400)" >&2
+  exit 1
+fi
+echo "API healthy"
+echo "DEPLOY OK"

@@ -1,0 +1,13 @@
+# The nginx image only needs the built frontends and the conf files;
+# without this the build context is ~3GB (cargo target/, node_modules, .git)
+*
+!TileRender/www/dist
+!Reminders/Frontend/reminders/dist
+!nginx.conf
+!security-headers.conf
+!api-security-headers.conf
+!wasm-security-headers.conf
+!pdf-security-headers.conf
+!server.conf
+!server_name_main.conf
+!server_name_reminders.conf
