@@ -75,22 +75,50 @@ curl -sf -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cach
 echo "cache purged"
 
 echo "== verifying =="
-sleep 3
+# A restart takes a few seconds to settle and cloudflared usually trails nginx,
+# so poll until the site comes good rather than sleeping a fixed guess and
+# reporting a cold cache as a failed deploy.
+VERIFY_TRIES=20
+VERIFY_DELAY=3
+
+verify() {
+  n=1
+  while :; do
+    if "$@"; then
+      return 0
+    fi
+    if [ "$n" -ge "$VERIFY_TRIES" ]; then
+      return 1
+    fi
+    n=$((n + 1))
+    sleep "$VERIFY_DELAY"
+  done
+}
+
 case " $targets " in *" nginx "*)
   local_js=$(grep -o 'assets/index-[^"]*\.js' "$FRONTEND/dist/index.html" | head -1)
-  live_js=$(curl -s "https://reminders.thjread.com/?deploycheck=$(date +%s)" \
-    | grep -o 'assets/index-[^"]*\.js' | head -1)
-  if [ "$local_js" != "$live_js" ]; then
-    echo "LIVE BUNDLE MISMATCH: live=$live_js local=$local_js" >&2
+  bundle_is_live() {
+    live_js=$(curl -s "https://reminders.thjread.com/?deploycheck=$(date +%s)" \
+      | grep -o 'assets/index-[^"]*\.js' | head -1)
+    [ -n "$live_js" ] && [ "$live_js" = "$local_js" ]
+  }
+  if ! verify bundle_is_live; then
+    echo "LIVE BUNDLE MISMATCH after $((VERIFY_TRIES * VERIFY_DELAY))s:" \
+         "live=${live_js:-<none>} local=$local_js" >&2
     exit 1
   fi
   echo "live bundle matches local build: $live_js"
   ;;
 esac
-api_code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
-  https://reminders.thjread.com/api/update -H "Content-Type: application/json" -d '{}')
-if [ "$api_code" != 400 ]; then
-  echo "API health check returned $api_code (expected 400)" >&2
+
+api_is_healthy() {
+  api_code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+    https://reminders.thjread.com/api/update -H "Content-Type: application/json" -d '{}')
+  [ "$api_code" = 400 ]
+}
+if ! verify api_is_healthy; then
+  echo "API health check returned ${api_code:-<none>}, expected 400," \
+       "after $((VERIFY_TRIES * VERIFY_DELAY))s" >&2
   exit 1
 fi
 echo "API healthy"
