@@ -19,6 +19,10 @@ services:
     # no published ports: all ingress comes through the cloudflared tunnel
     image: gcr.io/crypto-isotope-229419/reminders-nginx
     restart: always
+    # nginx resolves the rust:3000 upstream at startup and exits if it
+    # doesn't exist yet
+    depends_on:
+     - rust
 
   backup:
     image: gcr.io/crypto-isotope-229419/reminders-backup
