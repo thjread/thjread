@@ -13,10 +13,13 @@
 # verifies the live bundle and API. Exits non-zero on any failure, so it's
 # safe to run unattended.
 #
-# Needs: docker group access (sg docker -c ./deploy), the gcloud SSH key
-# loaded in an ssh-agent, and ~/.secrets/cf-api-token (Cache Purge perm).
+# Needs: docker group access, the gcloud SSH key loaded via claude-ssh,
+# and ~/.secrets/cf-api-token (Cache Purge perm).
 set -eu
 cd "$(dirname "$0")"
+
+# the agent started by ~/.local/bin/claude-ssh, unless one is already set
+export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-/tmp/claude-1000/ssh-agent.sock}"
 
 REG=gcr.io/crypto-isotope-229419
 CF_ZONE=492aee868243cb67393d7b638ffac598
